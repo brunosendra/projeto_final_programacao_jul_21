@@ -1,0 +1,396 @@
+---
+title: "Projeto Final v2"
+author: "Bruno Sendra de Assis"
+date: "20/07/2021"
+output: html_document
+  html_document:
+    df_print: paged
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo=F, error=F, warning=F, message=F)
+options(scipen=999)
+```
+
+
+```{r}
+#abrindo pacotes uteis
+library(tidyverse)
+library (tidylog)
+library(readxl)
+```
+
+* Inicialmente, foi baixado o banco de dados do Sistema de Avaliação da Educação Básica (SAEB) de 2019 no seguinte [link](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/saeb).
+
+  * O SAEB constitui a principal avaliação anual da educação básica, por meio da qual é calculado o Índice de Sesenvolvimento da Educação Básica (IDEB).
+
+* Os dados analisados são referentes aos questionários de contexto respondidos pelo(a) Secretário(a) Municipal de Educação, aplicados por meio eletrônico.
+
+    * A nota técnica do banco de dados informa que o questionário foi baseado nos novos eixos de qualidade do Saeb como Gestão (planejamento e participação na rede); Investimento; Profissionais da educação (formação, condições de trabalho, condições de emprego); Equidade (intersetorialidade e inclusão); e Ensino e aprendizagem (currículo).
+
+        * Analisando o dicionário do banco, identificou-se que os dados estão no formato .csv, separados por ';'. Desse modo, procedeu-se a abertura deste banco.
+
+```{r}
+#abrindo  o banco de dados dos SME
+saeb_sme_2019 <- read_csv("TS_SECRETARIO_MUNICIPAL_SAEB_2019.csv")
+saeb_sme_2019
+```
+
+* Utilizando a função 'in_line code, observa-se que o banco contém `r saeb_sme_2019 %>% nrow()` observações e `r saeb_sme_2019 %>% ncol()` variáveis.
+
+* Seleção das variáveis de interesse para deixar o banco de dado mais leve.
+
+```{r}
+saeb_sme_2019_resumo <- saeb_sme_2019 %>% 
+  select(ID_SAEB, ID_REGIAO, ID_UF, TX_RESP_Q001, TX_RESP_Q002, TX_RESP_Q003, TX_RESP_Q004, TX_RESP_Q017, TX_RESP_Q018, TX_RESP_Q040, TX_RESP_Q041, TX_RESP_Q042, TX_RESP_Q043, TX_RESP_Q044, TX_RESP_Q045, TX_RESP_Q046, TX_RESP_Q047, TX_RESP_Q048, TX_RESP_Q186, TX_RESP_Q187, TX_RESP_Q188, TX_RESP_Q189,TX_RESP_Q190)
+```
+
+
+* Observa-se que na tabela não há descrição de nenhum valor, somente códigos. Desse modo, foi necessário transformar os códigos com base nos valores identificados no dicionário do banco.
+
+```{r}
+saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>% mutate(ID_REGIAO=case_when(ID_REGIAO=="1"~"Norte", ID_REGIAO=="2"~"Nordeste", ID_REGIAO=="3"~"Sudeste", ID_REGIAO=="4"~"Sul", ID_REGIAO=="5"~"Centro-Oeste"), ID_UF=case_when(ID_UF=="11"~"RO", ID_UF=="12"~"AC", ID_UF=="13"~"AM", ID_UF=="14"~"RR", ID_UF=="15"~"PA", ID_UF=="16"~"AP", ID_UF=="17"~"TO", ID_UF=="21"~"MA", ID_UF=="22"~"PI", ID_UF=="23"~"CE", ID_UF=="24"~"RN",ID_UF=="25"~"PB", ID_UF=="26"~"PE", ID_UF=="27"~"AL", ID_UF=="28"~"SE", ID_UF=="29"~"BA", ID_UF=="31"~"MG", ID_UF=="32"~"ES", ID_UF=="33"~"RJ", ID_UF=="35"~"SP", ID_UF=="41"~"PR", ID_UF=="42"~"SC", ID_UF=="43"~"RS", ID_UF=="50"~"MS", ID_UF=="51"~"MT", ID_UF=="52"~"GO", ID_UF=="53"~"DF"))
+
+saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>%
+  mutate(TX_RESP_Q001=case_when(TX_RESP_Q001=="A"~"Masculino", TX_RESP_Q001=="B"~"Feminino"), TX_RESP_Q003=case_when(TX_RESP_Q003=="A"~"Branca", TX_RESP_Q003=="B"~"Preta", TX_RESP_Q003=="C"~"Parda", TX_RESP_Q003=="D"~"Amarela", TX_RESP_Q003=="E"~"Indígena", TX_RESP_Q003=="F"~"Não Declarado"), TX_RESP_Q004=case_when(TX_RESP_Q004=="A"~"Ensino Fundamental", TX_RESP_Q004=="B"~"Ensino Médio", TX_RESP_Q004=="C"~"Graduação", TX_RESP_Q004=="D"~"Especialização", TX_RESP_Q004=="E"~"Mestrado", TX_RESP_Q004=="F"~"Doutorado"), TX_RESP_Q017=case_when(TX_RESP_Q017=="A"~"Sim", TX_RESP_Q017=="B"~"Não"), TX_RESP_Q018=case_when(TX_RESP_Q018=="A"~"Sim", TX_RESP_Q018=="B"~"Não"))
+
+saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>%
+  mutate(TX_RESP_Q040=case_when(TX_RESP_Q040=="A"~"Sim", TX_RESP_Q040=="B"~"Não"), TX_RESP_Q041=case_when(TX_RESP_Q041=="A"~"Sim", TX_RESP_Q041=="B"~"Não"), TX_RESP_Q042=case_when(TX_RESP_Q042=="A"~"Sim", TX_RESP_Q042=="B"~"Não"), TX_RESP_Q043=case_when(TX_RESP_Q043=="A"~"Sim", TX_RESP_Q043=="B"~"Não"), TX_RESP_Q044=case_when(TX_RESP_Q044=="A"~"Sim", TX_RESP_Q044=="B"~"Não"), TX_RESP_Q045=case_when(TX_RESP_Q045=="A"~"Sim", TX_RESP_Q045=="B"~"Não"), TX_RESP_Q046=case_when(TX_RESP_Q046=="A"~"Sim", TX_RESP_Q046=="B"~"Não"), TX_RESP_Q047=case_when(TX_RESP_Q047=="A"~"Sim", TX_RESP_Q047=="B"~"Não"), TX_RESP_Q048=case_when(TX_RESP_Q048=="A"~"Sim", TX_RESP_Q048=="B"~"Não"))
+
+saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>%
+  mutate(TX_RESP_Q186=case_when(TX_RESP_Q186=="A"~"Sim", TX_RESP_Q186=="B"~"Não", TX_RESP_Q186=="C"~"Não se aplica"), TX_RESP_Q187=case_when(TX_RESP_Q187=="A"~"Sim", TX_RESP_Q187=="B"~"Não", TX_RESP_Q187=="C"~"Não se aplica"), TX_RESP_Q188=case_when(TX_RESP_Q188=="A"~"Sim", TX_RESP_Q188=="B"~"Não", TX_RESP_Q188=="C"~"Não se aplica"), TX_RESP_Q189=case_when(TX_RESP_Q189=="A"~"Sim", TX_RESP_Q189=="B"~"Não", TX_RESP_Q189=="C"~"Não se aplica"), TX_RESP_Q190=case_when(TX_RESP_Q190=="A"~"Sim", TX_RESP_Q190=="B"~"Não", TX_RESP_Q190=="C"~"Não se aplica"))
+```
+
+* Renomeando variáveis
+
+```{r}
+#
+saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>% rename(SEXO=TX_RESP_Q001, IDADE=TX_RESP_Q002, RACA=TX_RESP_Q003, ESCOLARIDADE=TX_RESP_Q004, SEC_INICIOU_GESTAO=TX_RESP_Q017, SEC_OUTRAS_ATIV=TX_RESP_Q018, LEI_NOMEACAO_DIR=TX_RESP_Q040, SEL_INDICACAO=TX_RESP_Q041, SEL_PROVA=TX_RESP_Q042, SEL_TEMPO=TX_RESP_Q043, SEL_TITULACAO=TX_RESP_Q044, SEL_EXPERIENCIA=TX_RESP_Q045, SEL_CURSO=TX_RESP_Q046, SEL_LISTA=TX_RESP_Q047, SEL_ELEICAO=TX_RESP_Q048, PLANO_CARREIRA_AUXILIAR_EI=TX_RESP_Q186, PLANO_CARREIRA_PROF_EI=TX_RESP_Q187, PLANO_CARREIRA_PROF_EF=TX_RESP_Q188, PLANO_CARREIRA_PROF_EM=TX_RESP_Q189, PLANO_CARREIRA_NAO_DOCENTES=TX_RESP_Q190)
+saeb_sme_2019_resumo
+```
+
+
+* Analisando a quantidade de SMEs por região
+
+```{r}
+saeb_sme_2019_resumo %>% group_by(ID_REGIAO) %>% 
+  tally() %>% 
+  ggplot() +
+  geom_col(aes(x=ID_REGIAO, y=n, fill=ID_REGIAO)) +
+  geom_text(aes(x=ID_REGIAO, y=n, label=n), vjust = 1) +                      
+  ggtitle("Total de Secretários Municipais por Região") + 
+  xlab("Região") + 
+  ylab("Secretários") + 
+  theme_classic() +
+  theme(axis.text.x = element_blank())
+```
+
+
+
+```{r}
+saeb_sme_2019_resumo %>% group_by(ID_UF) %>% 
+  tally() %>% 
+  ggplot() +
+  geom_col(aes(x=ID_UF, y=n, fill=ID_UF)) +
+  geom_text(aes(x=ID_UF, y=n, label=n), vjust = -1) +                      
+  ggtitle("Total de Secretários Municipais por Estado") + 
+  xlab("Estados") + 
+  ylab("Secretários") + 
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+theme(legend.position="bottom") +
+      theme(axis.text.x = element_text(size=8),
+          axis.text.y = element_text(size=8),
+          axis.title.x = element_text(size=8),
+          axis.title.y = element_text(size=8))
+```
+
+
+
+```{r}
+saeb_sme_2019_resumo %>% group_by(SEXO) %>% 
+  tally() %>% 
+  slice(1:2) %>%
+  ggplot() + 
+  geom_col(aes(x="", y=n, fill=SEXO), position="fill") +
+  ggtitle("Secretários Municipais de Educação por Gênero") + 
+  xlab("Total de Secretários") + 
+  ylab("Sexo") +
+  coord_polar(theta="y")
+```
+
+
+
+```{r}
+saeb_sme_2019_resumo %>% group_by(RACA) %>% 
+  tally() %>% 
+  ggplot() +
+  geom_col(aes(x=RACA, y=n, fill=RACA)) +
+  geom_text(aes(x=RACA, y=n, label=n), vjust = 1) +                      
+  ggtitle("Total de Secretários Municipais por Estado") + 
+  xlab("Estados") + 
+  ylab("Secretários") + 
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+      theme(axis.text.x = element_text(size=8),
+          axis.text.y = element_text(size=8),
+          axis.title.x = element_text(size=8),
+          axis.title.y = element_text(size=8))
+```
+
+
+
+```{r}
+saeb_sme_2019_resumo %>% group_by(ESCOLARIDADE) %>% 
+  tally() %>%
+  slice(1:6) %>%
+  ggplot() +
+  geom_col(aes(x=ESCOLARIDADE, y=n, fill=ESCOLARIDADE)) +
+  geom_text(aes(x=ESCOLARIDADE, y=n, label=n), vjust = 1) +                      
+  ggtitle("Total de Secretários Municipais por Estado") + 
+  xlab("Estados") + 
+  ylab("Secretários") + 
+  theme_classic() +
+  theme(axis.text.x = element_blank())
+```
+
+
+
+```{r}
+saeb_sme_2019_resumo %>% 
+  mutate(PROP_SEC_INICIO=SEC_INICIOU_GESTAO) %>% 
+  mutate(PROP_SEC_INICIO=case_when(PROP_SEC_INICIO=="Sim"~"1", PROP_SEC_INICIO=="Não"~"0")) %>%
+  mutate(PROP_SEC_INICIO=as.integer(PROP_SEC_INICIO)) %>%
+  group_by(ID_UF) %>%
+  summarise(PROP_SEC_INICIO=mean(PROP_SEC_INICIO, na.rm=TRUE)) %>%
+  ggplot() +
+  geom_histogram(aes(x=PROP_SEC_INICIO), binwidth=0.1, colour="black", fill="blue") +
+  ggtitle("Histograma da proporção de Secretários que iniciaram a gestão por Estado") + 
+  xlab("Proporção de Secretários") + 
+  ylab("Estado") +
+  theme_classic()
+```
+
+* Observa-se uma grande assimetria à esquerda em relação à porporção de secretários que estão desde o início do governo em cada estado.
+
+```{r}
+# 
+saeb_sme_2019_resumo %>% 
+  mutate(PROP_SEC_INICIO=SEC_INICIOU_GESTAO) %>% 
+  mutate(PROP_SEC_INICIO=case_when(PROP_SEC_INICIO=="Sim"~"1", PROP_SEC_INICIO=="Não"~"0")) %>%
+  mutate(PROP_SEC_INICIO=as.integer(PROP_SEC_INICIO)) %>%
+  group_by(ID_UF) %>%
+  summarise(PROP_SEC_INICIO=mean(PROP_SEC_INICIO, na.rm=TRUE)) %>%
+  ggplot() +
+  geom_density(aes(x=PROP_SEC_INICIO), colour="blue", fill="blue", alpha=0.2)
+```
+
+
+
+# Abrindo banco de dados de eleições municipais em 2016
+
+```{r}
+# abrindo banco e definindo o encoding correto
+vot_cand_mun_2016_br <- read_delim("votacao_candidato_munzona_2016_BRASIL.csv", delim=";", locale = locale(encoding='latin1'))
+```
+
+
+ em http://cepesp.io
+
+
+# Trabalhando com o banco de dados da eleição municipal de 2016
+
+* Inicialmente, foi baixado o banco de dados de resultados eleitorais para o cargo de Prefeito, agregado por município e candidato, para os anos de 2012 e 2016.
+
+    * O banco foi baixado on site da FGV CEPESP (2021). CepespData - Banco de Dados Políticos. Visitado em 20/7/2021. Disponível no [link](https://cepespdata.io/consulta/tse).
+    
+    * Optou-se pelo CepespData e não pelo banco de dados do TRE, pois este não contém identificadores do IBGE para os municípios, impossibilitando o cruzamento com, por exemplo, os dados dos questionários educacionais do SAEB.
+
+    * Analisando o dicionário do banco, identificou-se que os dados estão no formato .csv, separados por ';'. Desse modo, procedeu-se a abertura deste banco.
+
+```{r}
+#abrindo  o banco de dados de resultados eleitorais por município em 2012 e 2016
+tse_pref_mun_cand_2016_2012 <- read_csv("TSE_PREFEITO_MUNICIPIO_CANDIDATO_2016_2012.csv")
+```
+* Selecionando as variáveis de interesse e colapsando as demais com a função 'nest'.
+
+```{r}
+#Selecionando as variáveis de interesse e colapsando as demais com a função 'nest'.
+tse_pref_mun_cand_2016_2012_res <- tse_pref_mun_cand_2016_2012 %>% 
+  group_by(ANO_ELEICAO, NUM_TURNO, COD_MUN_IBGE, NOME_MUNICIPIO, UF, NOME_CANDIDATO, NUMERO_PARTIDO, SIGLA_PARTIDO, DESC_SIT_TOT_TURNO, QTDE_VOTOS) %>%
+  nest() %>%
+  arrange(ANO_ELEICAO, NUM_TURNO, UF, DESC_SIT_TOT_TURNO) %>%
+  ungroup()
+
+tse_pref_mun_cand_2016_2012_res
+```
+
+* Analisando as categorias das variáveis de interesse, identificou-se que existem alguns valores NA para situação total do 1º turno em 2012 e 2016. 
+
+```{r}
+# Analisando as categorias das variáveis de interesse para posterior filtragem.
+library("knitr")
+tse_pref_mun_cand_2016_2012_res %>% group_by(ANO_ELEICAO, NUM_TURNO, DESC_SIT_TOT_TURNO) %>%
+  tally() %>%
+  kable
+```
+
+* Analisando a quantidade total de candidatos a prefeito por UF no 1º turno em 2012 e 2016
+
+```{r}
+# verificando se não há nomes duplicados para prefeito no 1º turno
+total_candidatos_2012_2016 <- tse_pref_mun_cand_2016_2012_res %>% 
+  filter(NUM_TURNO=="1") %>%
+  arrange(NOME_CANDIDATO) %>%
+  distinct %>%
+  nrow
+```
+* Há um total de `r total_candidatos_2012_2016` candidatos a prefeito no 1º. Isso representa uma diferença de 214 em relação ao banco original, que são justamente os candidatos duplicados para o 2º turno em 2012 (100) e 2014 (114).
+
+    * Como foi incluída a função 'distinct' para identificar candidatos únicos, conclui-se que não há candidatos duplicados no banco.
+    
+```{r}
+# Total de Candidatos a prefeito no 1º por ano e UF
+tse_pref_mun_cand_2016_2012_res %>% 
+  filter(NUM_TURNO=="1") %>%
+  distinct %>%
+  group_by(UF, ANO_ELEICAO) %>%
+  tally() %>%
+  rename(TOT_CAND_ANO=n) %>%
+   ggplot() + 
+  geom_tile(aes(x = ANO_ELEICAO, y = UF, fill=TOT_CAND_ANO)) +
+  scale_fill_gradient(low="#f7fcfd", high="#238b45")
+```
+* Observa-se que os estados de São Paulo, Minas Gerais, Rio Grande do Sul e Bahia tiveram a maior quantidade de candidatos em todo o estado.
+    
+```{r}
+#proporção de candidatos a prefeito por ano em cada UF
+tse_pref_mun_cand_2016_2012_res %>% 
+  filter(NUM_TURNO=="1") %>%
+  distinct %>%
+  group_by(UF, ANO_ELEICAO) %>%
+  tally() %>%
+  rename(TOT_CAND_ANO=n) %>%
+  ggplot() +
+  geom_col(aes(x=UF, y=TOT_CAND_ANO, fill=ANO_ELEICAO), position = "fill")
+```
+* Observa-se houve relativa estabilidade na proporção de candidatos a prefeito entre os estados em 2012 e 2016, exceto por Roraima onde a concorrência se acentuou.
+
+* Vamos analisar agora somente os candidatos eleitos em seus respectivos municipios em 2012 e 2016.
+
+```{r}
+#selecionando somente os candidatos eleitos
+tse_pref_mun_cand_2016_2012_res_eleito <- tse_pref_mun_cand_2016_2012_res %>%
+  filter(DESC_SIT_TOT_TURNO=="ELEITO") %>%
+  arrange(ANO_ELEICAO, UF, NOME_MUNICIPIO, SIGLA_PARTIDO)
+```
+
+* Calculando o total de prefeitos por ano e partido
+
+```{r}
+# Calculando o total de prefeitos eleitos por ano e partido
+tse_pref_mun_cand_2016_2012_res_eleito %>%
+  group_by(ANO_ELEICAO, SIGLA_PARTIDO) %>%
+  tally %>%
+  rename(TOTAL_PREFEITOS=n) %>%
+  ggplot() +
+  geom_col(aes(x=SIGLA_PARTIDO, y=TOTAL_PREFEITOS, fill=ANO_ELEICAO)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_grid(rows=vars(ANO_ELEICAO))
+```
+
+* Observa-se também uma certa estabilidade entre a quantidade total de prefeitos eleitos por partido em 2012 e 2016, com o PMDB e o PSDB se destacando em relação aos demais. Porém, nota-se uma grande redução sofrida pelo PT na última eleição em decorrência do processo de impeachment.
+
+
+
+
+```{r}
+tse_pref_mun_cand_2016_2012_res_eleito
+```
+
+* O banco 
+
+```{r}
+#abrindo  o banco de dados dos SME
+diretores_saeb_2019 <- read_csv("TS_DIRETOR_SAEB_2019.csv")
+diretores_saeb_2019 %>% nrow()
+```
+
+```{r}
+diretores_saeb_2019_res <- diretores_saeb_2019 %>%
+  select(ID_REGIAO, ID_UF, ID_MUNICIPIO, ID_AREA, ID_ESCOLA, ID_DEPENDENCIA_ADM, ID_LOCALIZACAO, IN_PREENCHIMENTO_QUESTIONARIO, TX_RESP_Q001, TX_RESP_Q004, TX_RESP_Q005, TX_RESP_Q006, TX_RESP_Q007, TX_RESP_Q022)
+diretores_saeb_2019_res
+```
+
+* Para evitar repetir todos os códigos na drescição da região, foi utilizada a função map
+
+```{r}
+diretores_saeb_2019_res <- diretores_saeb_2019_res %>%
+  mutate(ID_REGIAO=case_when(ID_REGIAO=="1"~"Norte", ID_REGIAO=="2"~"Nordeste", ID_REGIAO=="3"~"Sudeste", ID_REGIAO=="4"~"Sul", ID_REGIAO=="5"~"Centro-Oeste"), ID_UF=case_when(ID_UF=="11"~"RO", ID_UF=="12"~"AC", ID_UF=="13"~"AM", ID_UF=="14"~"RR", ID_UF=="15"~"PA", ID_UF=="16"~"AP", ID_UF=="17"~"TO", ID_UF=="21"~"MA", ID_UF=="22"~"PI", ID_UF=="23"~"CE", ID_UF=="24"~"RN",ID_UF=="25"~"PB", ID_UF=="26"~"PE", ID_UF=="27"~"AL", ID_UF=="28"~"SE", ID_UF=="29"~"BA", ID_UF=="31"~"MG", ID_UF=="32"~"ES", ID_UF=="33"~"RJ", ID_UF=="35"~"SP", ID_UF=="41"~"PR", ID_UF=="42"~"SC", ID_UF=="43"~"RS", ID_UF=="50"~"MS", ID_UF=="51"~"MT", ID_UF=="52"~"GO", ID_UF=="53"~"DF"))
+
+diretores_saeb_2019_res <- diretores_saeb_2019_res %>%
+  mutate(ID_AREA=case_when(ID_AREA=="1"~"Capital", ID_AREA=="2"~"Interior"), ID_DEPENDENCIA_ADM=case_when(ID_DEPENDENCIA_ADM=="1"~"Federal", ID_DEPENDENCIA_ADM=="2"~"Estadual", ID_DEPENDENCIA_ADM=="3"~"Municipal", ID_DEPENDENCIA_ADM=="4"~"Privada"), ID_LOCALIZACAO=case_when(ID_LOCALIZACAO=="1"~"Urbana", ID_LOCALIZACAO=="2"~"Rural"), TX_RESP_Q001=case_when(TX_RESP_Q001=="A"~"Branca", TX_RESP_Q001=="B"~"Preta", TX_RESP_Q001=="C"~"Parda", TX_RESP_Q001=="D"~"Amarela", TX_RESP_Q001=="E"~"Indígena", TX_RESP_Q001=="F"~"Não Declarado"), TX_RESP_Q022=case_when(TX_RESP_Q022=="A"~"Nada Preparado", TX_RESP_Q022=="B"~"Pouco Preparado", TX_RESP_Q022=="C"~"Preparado", TX_RESP_Q022=="D"~"Muito Preparado"))
+
+diretores_saeb_2019_res <- diretores_saeb_2019_res %>%
+  rename(RACA=TX_RESP_Q001, DIR_ESC_ANO=TX_RESP_Q004, DIR_ESC_MES=TX_RESP_Q005, DIR_MESMA_ESC_ANO=TX_RESP_Q006, DIR_MESMA_ESC_MES=TX_RESP_Q007, LIDER_EQUIPE_ESC=TX_RESP_Q022)
+```
+
+ * Criando nova variável ordinal para liderança
+
+```{r}
+diretores_saeb_2019_res_lider <- diretores_saeb_2019_res %>%
+  mutate(LIDER_EQUIPE_ESC_IND=case_when(LIDER_EQUIPE_ESC=="Nada Preparado"~"0", LIDER_EQUIPE_ESC=="Pouco Preparado"~"1", LIDER_EQUIPE_ESC=="Preparado"~"2", LIDER_EQUIPE_ESC=="Muito Preparado"~"3"))
+```
+
+diretores_saeb_2019_res_fct_lider_ano <- 
+
+```{r}
+diretores_saeb_2019_res_lider_rec <- diretores_saeb_2019_res_lider %>%
+  mutate(DIR_ESC_ANO = case_when(DIR_ESC_ANO<=2~"De 0 a 2 Anos", DIR_ESC_ANO>2 & DIR_ESC_ANO <=5~"De 3 a 5 Anos", DIR_ESC_ANO>5 & DIR_ESC_ANO <=10~"De 6 a 10 Anos", DIR_ESC_ANO>10 & DIR_ESC_ANO <=15~"De 11 a 15 Anos", DIR_ESC_ANO>15~"Acima de 15 anos"), DIR_MESMA_ESC_ANO = case_when(DIR_MESMA_ESC_ANO<=2~"De 0 a 2 Anos", DIR_MESMA_ESC_ANO>2 & DIR_MESMA_ESC_ANO <=5~"De 3 a 5 Anos", DIR_MESMA_ESC_ANO>5 & DIR_MESMA_ESC_ANO <=10~"De 6 a 10 Anos", DIR_MESMA_ESC_ANO>10 & DIR_MESMA_ESC_ANO <=15~"De 11 a 15 Anos", DIR_MESMA_ESC_ANO>15~"Acima de 15 anos"))
+```
+
+* transformando variáves em factor
+
+```{r}
+diretores_saeb_2019_res_lider_rec_fact <- diretores_saeb_2019_res_lider_rec %>% mutate(ID_REGIAO=as.factor(ID_REGIAO), ID_UF=as.factor(ID_UF), ID_AREA=as.factor(ID_AREA), ID_DEPENDENCIA_ADM=as.factor(ID_DEPENDENCIA_ADM), ID_LOCALIZACAO=as.factor(ID_LOCALIZACAO), RACA=as.factor(RACA), LIDER_EQUIPE_ESC=as.factor(LIDER_EQUIPE_ESC), LIDER_EQUIPE_ESC_IND=as.integer(LIDER_EQUIPE_ESC_IND), DIR_ESC_ANO=as.factor(DIR_ESC_ANO), DIR_MESMA_ESC_ANO=as.factor(DIR_MESMA_ESC_ANO))
+```
+
+```{r}
+diretores_saeb_2019_res_lider_rec_fact
+```
+
+### Conhecendo a distribuição das variáveis de interesse 
+
+* Replace NA.
+
+```{r}
+diretores_saeb_2019_res_lider_rec_fact %>%
+  group_by(LIDER_EQUIPE_ESC) %>%
+  tally() %>%
+  rename(TOT_DIRETORES = n) %>%
+  mutate(PERC_DIRETORES=TOT_DIRETORES/(sum(TOT_DIRETORES, na.rm = TRUE))) %>%
+  add_row(LIDER_EQUIPE_ESC="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
+  mutate(LIDER_EQUIPE_ESC=replace_na(LIDER_EQUIPE_ESC, "Não Declarado"))
+```
+
+```{r}
+diretores_saeb_2019_res_lider_rec_fact %>%
+  group_by(DIR_ESC_ANO) %>%
+  tally() %>%
+  rename(TOT_DIRETORES = n) %>%
+  mutate(PERC_DIRETORES=TOT_DIRETORES/(sum(TOT_DIRETORES, na.rm = TRUE))) %>%
+  add_row(DIR_ESC_ANO="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
+  mutate(DIR_ESC_ANO=replace_na(DIR_ESC_ANO, "Não Declarado"))
+```
+
+```{r}
+diretores_saeb_2019_res_lider_rec_fact %>%
+  group_by(DIR_MESMA_ESC_ANO) %>%
+  tally() %>%
+  rename(TOT_DIRETORES = n) %>%
+  mutate(PERC_DIRETORES=TOT_DIRETORES/(sum(TOT_DIRETORES, na.rm = TRUE))) %>%
+  add_row(DIR_MESMA_ESC_ANO="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
+  mutate(DIR_MESMA_ESC_ANO=replace_na(DIR_MESMA_ESC_ANO, "Não Declarado"))
+```
+
