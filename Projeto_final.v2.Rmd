@@ -32,6 +32,8 @@ knitr::opts_chunk$set(echo=F, error=F, warning=F, message=F)
 options(scipen=999)
 ```
 
+* Inicialmente,foi criado um projeto no git_hub no seguinte [link](https://github.com/brunosendra/projeto_final_programacao_jul_21) para que não seja perdida nenhuma informação e para que seja aproveitada futuramente na tese dedoutorado.
+
 ```{r}
 #abrindo pacotes uteis
 library(tidyverse)
@@ -41,7 +43,7 @@ library(readxl)
 
 * Inicialmente, foi baixado o banco de dados do Sistema de Avaliação da Educação Básica (SAEB) de 2019 no seguinte [link](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/saeb).
 
-    * O SAEB constitui a principal avaliação anual da educação básica, por meio da qual é calculado o Índice de Sesenvolvimento da Educação Básica (IDEB).
+    * O SAEB constitui a principal avaliação anual da educação básica, por meio da qual é calculado o Índice de Desenvolvimento da Educação Básica (IDEB).
 
     * Os dados analisados são referentes aos questionários de contexto respondidos pelo(a) Secretário(a) Municipal de Educação, aplicados por meio eletrônico no 2º semestre de 2019.
 
@@ -55,7 +57,7 @@ saeb_sme_2019 <- read_csv("TS_SECRETARIO_MUNICIPAL_SAEB_2019.csv")
 saeb_sme_2019
 ```
 
-* Utilizando a função 'in_line code, observou-se que o banco original contém `r saeb_sme_2019 %>% nrow()` observações e `r saeb_sme_2019 %>% ncol()` variáveis.
+* Utilizando a função 'in_line code', observou-se que o banco original contém `r saeb_sme_2019 %>% nrow()` observações e `r saeb_sme_2019 %>% ncol()` variáveis.
 
 * Em seguida, foram selecionadas as principais variáveis de interesse para deixar o banco de dados mais leve antes de proceder à análise do questionário.
 
@@ -199,7 +201,7 @@ saeb_sme_2019_resumo %>%
   theme_classic()
 ```
 
-* Por fim, criu-se um gráfico de densidade a partir dos mesmos dados do item anterior, sobre Secretários que estão no cargo desde que se iniciou o ciclo de governo.
+* Por fim, criou-se um gráfico de densidade a partir dos mesmos dados do item anterior, sobre Secretários que estão no cargo desde que se iniciou o ciclo de governo.
 
 ```{r}
 # grafico de densidade da proporção de Secretários que iniciaram a gestão por Estado
@@ -259,7 +261,7 @@ tse_pref_mun_cand_2016_2012_res %>% group_by(ANO_ELEICAO, NUM_TURNO, DESC_SIT_TO
   kable
 ```
 
-* Analisando a quantidade total de candidatos a prefeito por UF no 1º turno em 2012 e 2016
+* Depois foi analisada a quantidade total de candidatos a prefeito por UF no 1º turno em 2012 e 2016
 
 ```{r}
 # verificando se não há nomes duplicados para prefeito no 1º turno
@@ -295,7 +297,8 @@ tse_pref_mun_cand_2016_2012_res %>%
           axis.title.x = element_text(size=12),
           axis.title.y = element_text(size=12))
 ```
-        * Observa-se que os estados de São Paulo, Minas Gerais, Rio Grande do Sul e Bahia tiveram a maior quantidade de candidatos a prefeito, comparado aos demais estados.
+
+* Observa-se que os estados de São Paulo, Minas Gerais, Rio Grande do Sul e Bahia tiveram a maior quantidade de candidatos a prefeito, comparado aos demais estados.
     
 * Posteriormente, analisou-se a proporção de candidados a prefeito por ano nas eleições de 2012 e 2016.
     
@@ -314,7 +317,8 @@ tse_pref_mun_cand_2016_2012_res %>%
   ylab("Total de Candidatos") + 
   theme_classic()
 ```
-    * Observa-se que houve relativa estabilidade na proporção de candidatos a prefeito por ano, exceto por Roraima onde a concorrência se acentuou em 2016.
+    
+* Observa-se que houve relativa estabilidade na proporção de candidatos a prefeito por ano, exceto por Roraima onde a concorrência se acentuou em 2016.
 
 * Na sequência, filtrou-se somente os candidatos eleitos em seus respectivos municipios em 2012 e 2016.
 
@@ -325,7 +329,8 @@ tse_pref_mun_cand_2016_2012_res_eleito <- tse_pref_mun_cand_2016_2012_res %>%
   arrange(UF, NOME_MUNICIPIO, SIGLA_PARTIDO) %>%
   rename(ID_MUNICIPIO=COD_MUN_IBGE)
 ```
-    * Observa-se que, assim, o banco de dados foi reduzido de 31.468 para apenas 20.385 observações de candidatos a prefeito, uma média aproximada de 4 por município.
+    
+* Observa-se que, assim, o banco de dados foi reduzido de 31.468 para apenas 20.385 observações de candidatos a prefeito, uma média aproximada de 4 por município.
 
 * Assim, foi calculado o total de prefeitos por ano e partido.
 
@@ -344,7 +349,8 @@ tse_pref_mun_cand_2016_2012_res_eleito %>%
   xlab("Partido") + 
   ylab("Total de Prefeitos")
 ```
-    * Percebe-se também uma certa estabilidade entre a quantidade total de prefeitos eleitos por partido em 2012 e 2016, com o PMDB e o PSDB se destacando em relação aos demais. Porém, nota-se uma grande redução sofrida pelo PT na última eleição em decorrência do processo de impeachment.
+
+* Percebe-se também uma certa estabilidade entre a quantidade total de prefeitos eleitos por partido em 2012 e 2016, com o PMDB e o PSDB se destacando em relação aos demais. Porém, nota-se uma grande redução sofrida pelo PT na última eleição em decorrência do processo de impeachment.
 
 * Em sequida, foi aplicada a função 'pivot_wider' para virar os dados de 2012 e 2016 do longo para o largo, o que fez o banco de dados ser reduzido de 11.083 para 5.569 observações, pois não há eleições ou resultados para ambos os anos.
 
@@ -399,7 +405,6 @@ tse_pref_mun_cand_2016_2012_res_eleito_data %>%
 ```{r}
 # abrindo o banco de dados dos SME
 diretores_saeb_2019 <- read_csv("TS_DIRETOR_SAEB_2019.csv")
-diretores_saeb_2019 %>% nrow()
 ```
 
 * Na sequência, foram selecionadas as principais variáveis de interesse, totalizando um banco com apenas 14 variáveis e 74.176 obsservações.
@@ -489,7 +494,7 @@ diretores_saeb_2019_res_lider_rec_fact_mun %>%
   mutate(DIR_ESC_ANO_FX=replace_na(DIR_ESC_ANO_FX, "Não Declarado"))
 ```
 
-* foi calculado ainda o percentual de diretores com experiência no cargo de diretor na MESMA escola, por faixa de anos.
+* Foi calculado ainda o percentual de diretores com experiência no cargo de diretor na MESMA escola, por faixa de anos.
 
     * O maior percentual de diretores (36,6%) possui experiência na faixa de 0 a 2 anos no cargo de diretor na MESMA escola, ou seja, assumiram a escola neste último mandato de 2016, sendo que por volta de 73% tem no máximo 10 anos nesta função (não estão considerados aqueles que não declararam)..
 
@@ -615,7 +620,8 @@ diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 <- diretores_saeb_2019_tse_pr
 
 diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 
 ```
-    * Logo, o banco de dados final para análise estatística ficou com 5.236 observações e 17 variáveis.
+
+* Logo, o banco de dados final para análise estatística ficou com 5.236 observações e 17 variáveis.
 
 ### Parte 5 - Estatística Inferecial
 
@@ -640,7 +646,8 @@ teste_normalidade <- diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
 # Verificando a classe do objeto criado pela shapiro.test
 class(teste_normalidade)
 ```
-    * Também foi criado um gráfico para o teste de normalidade, onde verificou-se uma alta concentração na faixa 2 (preparado), conforme observado anteriormente.
+
+* Também foi criado um gráfico para o teste de normalidade, onde verificou-se uma alta concentração na faixa 2 (preparado), conforme observado anteriormente.
 
 ```{r}
 #criando um gráfico para o teste de normalidade
@@ -671,7 +678,8 @@ teste_media <- diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
 
 teste_media
 ```
-    *Logo, foi criado um gráfico para demonstrar o intervalo de confiança em relação à média de liderança do diretor para São Paulo.
+
+* Logo, foi criado um gráfico para demonstrar o intervalo de confiança em relação à média de liderança do diretor para São Paulo.
 
 ```{r}
 # calculando o intervalo da liderança média do diretor em São Paulo
@@ -691,8 +699,8 @@ diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
   cor.test(~ ROTATIVIDADE_PART + DIR_MESMA_ESC_ANO_media, data=.) %>%
   tidy()
 ```
-    * Os resultados indicam um coeficiente de correlação de -0,15 e um valor ‘p’ de 1,16. Logo, há uma correlação negativa e estatisticamente significativa entre rotatividade partidária e anos no cargo de diretor na mesma escola.
 
+* Os resultados indicam um coeficiente de correlação de -0,15 e um valor ‘p’ de 1,16. Logo, há uma correlação negativa e estatisticamente significativa entre rotatividade partidária e anos no cargo de diretor na mesma escola.
 
 * Também foi criado um teste de correlação (Chi-squared) para as variáveis categóricas de 'rotatividade partidária' e a variável binária criada de 'até 7 anos no cargo de diretor na mesma escola'.
 
@@ -703,7 +711,8 @@ teste_correlacao <- diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>% selec
   chisq.test() %>%
   tidy()
 ```
-    * O resultado do Chi-squared test de `r teste_correlacao %>% pull(p.value) %>% round(3)`
+
+* O resultado do Chi-squared test é de `r teste_correlacao %>% pull(p.value) %>% round(3)`
 
 * Por fim, foram testados 3 modelos de Regressão Linear Múltipla com base em diferentes formas de categorizar a experiência do diretor na função e o tempo no cargo de diretor na MESMA escola.
 
