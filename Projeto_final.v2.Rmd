@@ -2,16 +2,35 @@
 title: "Projeto Final v2"
 author: "Bruno Sendra de Assis"
 date: "20/07/2021"
-output: html_document
+output:
   html_document:
     df_print: paged
 ---
 
+
+### Objetivo do Trabalho e Bases de Dados
+
+* A finalidade desta análise é identificar se a rotatividade dos partidos nas eleições municipais de 2012 e de 2016 afeta a percepção de liderança dos diretores escolares em escolas municipais de todo o Brasil.
+
+* Foram utilizadas as seguintes bases de dados:
+
+    * ***TSE/CEPESP - Resultados das Eleições Municipais de 2012 e 2016***. Após formatação adequada da base de dados, criou-se uma variável independente de interesse primário para ***rotatividade partidária***, referente aos municípios onde houve mudança de partido na eleição municipal de 2016 em relação à 2012 (=1) e onde não houve mudança de partido (=0).
+
+    * ***SAEB - Sistema de Avaliação da Educação Básica de 2019 - Questionário do Secretário(a) Municipal***. No início do trabalho, previa-se correlacionar a rotatividade partidária à atuação dos Secretários(a). Todavia, identificou-se que esta base do SAEB não possuía um código chave para identificação dos municípios. Logo, realizou-se apenas estatísticas descritivas por município e optou-se pela utilização da base de diretores escolares que contém o identificador chave e informações sobre liderança do diretor.
+    
+    * ***SAEB - Sistema de Avaliação da Educação Básica de 2019 - Questionário do Diretor Escolar***. Após formatação da base de dados, criou-se uma variável dependente de ***liderança do diretor***, referente à questão sobre o quanto eles se sentem preparados ou não para o exercício da liderança na escola (4 categorias ordinais). Também foram criadas outras variáveis independentes de controle: tempo no cargo de diretor na mesma escola, experiência na função de diretor, urbanização, capital, raça branca e nível socioeconômico médios dos alunos.  
+    
+* Contém destacar que a opção pelo questionário do SAEB 2019 se deu porque adotou-se como premissa que os municípios onde não houve rotatividade já estaríam com o mesmo partido há pelo menos 7 anos, enquanto os municípios onde houve rotatividade estariam no cargo há no máximo 3 anos quando responderam os questionários.
+
+    * O trabalho foi dividido em 5 partes, dispostas a seguir:
+
+### Parte 1 - Análise do banco de dados do SAEB sobre Secretários(as) Municipais de Educação
+
 ```{r, echo=FALSE}
+# configuração para exclusão de erros e mensagems do relatório final
 knitr::opts_chunk$set(echo=F, error=F, warning=F, message=F)
 options(scipen=999)
 ```
-
 
 ```{r}
 #abrindo pacotes uteis
@@ -22,33 +41,34 @@ library(readxl)
 
 * Inicialmente, foi baixado o banco de dados do Sistema de Avaliação da Educação Básica (SAEB) de 2019 no seguinte [link](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/saeb).
 
-  * O SAEB constitui a principal avaliação anual da educação básica, por meio da qual é calculado o Índice de Sesenvolvimento da Educação Básica (IDEB).
+    * O SAEB constitui a principal avaliação anual da educação básica, por meio da qual é calculado o Índice de Sesenvolvimento da Educação Básica (IDEB).
 
-* Os dados analisados são referentes aos questionários de contexto respondidos pelo(a) Secretário(a) Municipal de Educação, aplicados por meio eletrônico.
+    * Os dados analisados são referentes aos questionários de contexto respondidos pelo(a) Secretário(a) Municipal de Educação, aplicados por meio eletrônico no 2º semestre de 2019.
 
     * A nota técnica do banco de dados informa que o questionário foi baseado nos novos eixos de qualidade do Saeb como Gestão (planejamento e participação na rede); Investimento; Profissionais da educação (formação, condições de trabalho, condições de emprego); Equidade (intersetorialidade e inclusão); e Ensino e aprendizagem (currículo).
 
-        * Analisando o dicionário do banco, identificou-se que os dados estão no formato .csv, separados por ';'. Desse modo, procedeu-se a abertura deste banco.
+* Analisando o dicionário do banco de dados, identificou-se que os dados estão no formato .csv, separados por ';'. Desse modo, procedeu-se a abertura deste banco.
 
 ```{r}
-#abrindo  o banco de dados dos SME
+#abrindo o banco de dados dos SME
 saeb_sme_2019 <- read_csv("TS_SECRETARIO_MUNICIPAL_SAEB_2019.csv")
 saeb_sme_2019
 ```
 
-* Utilizando a função 'in_line code, observa-se que o banco contém `r saeb_sme_2019 %>% nrow()` observações e `r saeb_sme_2019 %>% ncol()` variáveis.
+* Utilizando a função 'in_line code, observou-se que o banco original contém `r saeb_sme_2019 %>% nrow()` observações e `r saeb_sme_2019 %>% ncol()` variáveis.
 
-* Seleção das variáveis de interesse para deixar o banco de dado mais leve.
+* Em seguida, foram selecionadas as principais variáveis de interesse para deixar o banco de dados mais leve antes de proceder à análise do questionário.
 
 ```{r}
+# seleção das variáveis de interesse
 saeb_sme_2019_resumo <- saeb_sme_2019 %>% 
   select(ID_SAEB, ID_REGIAO, ID_UF, TX_RESP_Q001, TX_RESP_Q002, TX_RESP_Q003, TX_RESP_Q004, TX_RESP_Q017, TX_RESP_Q018, TX_RESP_Q040, TX_RESP_Q041, TX_RESP_Q042, TX_RESP_Q043, TX_RESP_Q044, TX_RESP_Q045, TX_RESP_Q046, TX_RESP_Q047, TX_RESP_Q048, TX_RESP_Q186, TX_RESP_Q187, TX_RESP_Q188, TX_RESP_Q189,TX_RESP_Q190)
 ```
 
-
-* Observa-se que na tabela não há descrição de nenhum valor, somente códigos. Desse modo, foi necessário transformar os códigos com base nos valores identificados no dicionário do banco.
+* Nota-se que nesta tabela não há descrição de nenhum valor, somente códigos. Desse modo, foi necessário transformar estes códigos com base nos valores identificados no dicionário do banco.
 
 ```{r}
+# recodificação das variáveis e observações com base no dicionário do Saeb
 saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>% mutate(ID_REGIAO=case_when(ID_REGIAO=="1"~"Norte", ID_REGIAO=="2"~"Nordeste", ID_REGIAO=="3"~"Sudeste", ID_REGIAO=="4"~"Sul", ID_REGIAO=="5"~"Centro-Oeste"), ID_UF=case_when(ID_UF=="11"~"RO", ID_UF=="12"~"AC", ID_UF=="13"~"AM", ID_UF=="14"~"RR", ID_UF=="15"~"PA", ID_UF=="16"~"AP", ID_UF=="17"~"TO", ID_UF=="21"~"MA", ID_UF=="22"~"PI", ID_UF=="23"~"CE", ID_UF=="24"~"RN",ID_UF=="25"~"PB", ID_UF=="26"~"PE", ID_UF=="27"~"AL", ID_UF=="28"~"SE", ID_UF=="29"~"BA", ID_UF=="31"~"MG", ID_UF=="32"~"ES", ID_UF=="33"~"RJ", ID_UF=="35"~"SP", ID_UF=="41"~"PR", ID_UF=="42"~"SC", ID_UF=="43"~"RS", ID_UF=="50"~"MS", ID_UF=="51"~"MT", ID_UF=="52"~"GO", ID_UF=="53"~"DF"))
 
 saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>%
@@ -61,23 +81,23 @@ saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>%
   mutate(TX_RESP_Q186=case_when(TX_RESP_Q186=="A"~"Sim", TX_RESP_Q186=="B"~"Não", TX_RESP_Q186=="C"~"Não se aplica"), TX_RESP_Q187=case_when(TX_RESP_Q187=="A"~"Sim", TX_RESP_Q187=="B"~"Não", TX_RESP_Q187=="C"~"Não se aplica"), TX_RESP_Q188=case_when(TX_RESP_Q188=="A"~"Sim", TX_RESP_Q188=="B"~"Não", TX_RESP_Q188=="C"~"Não se aplica"), TX_RESP_Q189=case_when(TX_RESP_Q189=="A"~"Sim", TX_RESP_Q189=="B"~"Não", TX_RESP_Q189=="C"~"Não se aplica"), TX_RESP_Q190=case_when(TX_RESP_Q190=="A"~"Sim", TX_RESP_Q190=="B"~"Não", TX_RESP_Q190=="C"~"Não se aplica"))
 ```
 
-* Renomeando variáveis
+* Posteriormente, as variáveis foram renomeadas a fim de facilitar a sua identificação.
 
 ```{r}
-#
+# renomeando as variáveis de interesse
 saeb_sme_2019_resumo <- saeb_sme_2019_resumo %>% rename(SEXO=TX_RESP_Q001, IDADE=TX_RESP_Q002, RACA=TX_RESP_Q003, ESCOLARIDADE=TX_RESP_Q004, SEC_INICIOU_GESTAO=TX_RESP_Q017, SEC_OUTRAS_ATIV=TX_RESP_Q018, LEI_NOMEACAO_DIR=TX_RESP_Q040, SEL_INDICACAO=TX_RESP_Q041, SEL_PROVA=TX_RESP_Q042, SEL_TEMPO=TX_RESP_Q043, SEL_TITULACAO=TX_RESP_Q044, SEL_EXPERIENCIA=TX_RESP_Q045, SEL_CURSO=TX_RESP_Q046, SEL_LISTA=TX_RESP_Q047, SEL_ELEICAO=TX_RESP_Q048, PLANO_CARREIRA_AUXILIAR_EI=TX_RESP_Q186, PLANO_CARREIRA_PROF_EI=TX_RESP_Q187, PLANO_CARREIRA_PROF_EF=TX_RESP_Q188, PLANO_CARREIRA_PROF_EM=TX_RESP_Q189, PLANO_CARREIRA_NAO_DOCENTES=TX_RESP_Q190)
 saeb_sme_2019_resumo
 ```
 
-
-* Analisando a quantidade de SMEs por região
+* Concluída a etapa de recodificação do banco, foi iniciada a análise de estatísticas descritivas para identificar os Secretários(as) Municipais de Educação por região, com predominância no Nordeste e no Sudeste.
 
 ```{r}
+# distribuição dos SMEs por região
 saeb_sme_2019_resumo %>% group_by(ID_REGIAO) %>% 
   tally() %>% 
   ggplot() +
   geom_col(aes(x=ID_REGIAO, y=n, fill=ID_REGIAO)) +
-  geom_text(aes(x=ID_REGIAO, y=n, label=n), vjust = 1) +                      
+  geom_text(aes(x=ID_REGIAO, y=n, label=n), vjust = 2) +                      
   ggtitle("Total de Secretários Municipais por Região") + 
   xlab("Região") + 
   ylab("Secretários") + 
@@ -85,14 +105,15 @@ saeb_sme_2019_resumo %>% group_by(ID_REGIAO) %>%
   theme(axis.text.x = element_blank())
 ```
 
-
+* Em seguida, identificou-se os Secretários(as) Municipais de Educação por estado, com predominância em Minas Gerais e em São Paulo, o que era esperado dada a maior quantidade de municípios nestas unidades federativas.
 
 ```{r}
+# distribuição dos SMEs por estado
 saeb_sme_2019_resumo %>% group_by(ID_UF) %>% 
   tally() %>% 
   ggplot() +
   geom_col(aes(x=ID_UF, y=n, fill=ID_UF)) +
-  geom_text(aes(x=ID_UF, y=n, label=n), vjust = -1) +                      
+  geom_text(aes(x=ID_UF, y=n, label=n), vjust = -0.5, size=2) +                      
   ggtitle("Total de Secretários Municipais por Estado") + 
   xlab("Estados") + 
   ylab("Secretários") + 
@@ -101,13 +122,14 @@ saeb_sme_2019_resumo %>% group_by(ID_UF) %>%
 theme(legend.position="bottom") +
       theme(axis.text.x = element_text(size=8),
           axis.text.y = element_text(size=8),
-          axis.title.x = element_text(size=8),
-          axis.title.y = element_text(size=8))
+          axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12))
 ```
 
-
+* Depois foi analisada a proporção de Secretários por gênero, com 72,4% de mulheres.
 
 ```{r}
+# proporção de secretários por gênero
 saeb_sme_2019_resumo %>% group_by(SEXO) %>% 
   tally() %>% 
   slice(1:2) %>%
@@ -119,14 +141,16 @@ saeb_sme_2019_resumo %>% group_by(SEXO) %>%
   coord_polar(theta="y")
 ```
 
-
+* Posteriormente, analisou-se a proporção de Secretários por raça, com 58,4% tendo declarado serem brancos.
 
 ```{r}
+# proporção de secretários por raça
 saeb_sme_2019_resumo %>% group_by(RACA) %>% 
-  tally() %>% 
+  tally() %>%
+  filter(RACA!="") %>%
   ggplot() +
   geom_col(aes(x=RACA, y=n, fill=RACA)) +
-  geom_text(aes(x=RACA, y=n, label=n), vjust = 1) +                      
+  geom_text(aes(x=RACA, y=n, label=n), vjust = -1, size=3) +                      
   ggtitle("Total de Secretários Municipais por Estado") + 
   xlab("Estados") + 
   ylab("Secretários") + 
@@ -134,29 +158,33 @@ saeb_sme_2019_resumo %>% group_by(RACA) %>%
   theme(axis.text.x = element_blank()) +
       theme(axis.text.x = element_text(size=8),
           axis.text.y = element_text(size=8),
-          axis.title.x = element_text(size=8),
-          axis.title.y = element_text(size=8))
+          axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12))
 ```
 
-
+* Em seguida, analisou-se a proporção de Secretários por nível de escolaridade, com 67,4% de profissionais com especialização e somente 1,2% com doutorado.
 
 ```{r}
+# proporção de secretários por escolaridade
 saeb_sme_2019_resumo %>% group_by(ESCOLARIDADE) %>% 
   tally() %>%
   slice(1:6) %>%
   ggplot() +
   geom_col(aes(x=ESCOLARIDADE, y=n, fill=ESCOLARIDADE)) +
-  geom_text(aes(x=ESCOLARIDADE, y=n, label=n), vjust = 1) +                      
-  ggtitle("Total de Secretários Municipais por Estado") + 
-  xlab("Estados") + 
-  ylab("Secretários") + 
+  geom_text(aes(x=ESCOLARIDADE, y=n, label=n), vjust = -1, size=3) +                      
+  ggtitle("Total de Secretários Municipais por Nível Educacional") + 
+  xlab("Escolaridade") + 
+  ylab("Total de Secretários") + 
   theme_classic() +
   theme(axis.text.x = element_blank())
 ```
 
+* Na sequência, analisou-se a proporção de Secretários que iniciaram a gestão por estado, ou seja, que estão no cargo desde que o partido assumiu o governo, com base nas respostas auto-declaradas.
 
+    * Nota-se uma assimetria à esquerda, com predomínio na faixa dos 60% de Secretários que iniciaram a gestão.
 
 ```{r}
+# histograma da proporção de Secretários que iniciaram a gestão por Estado
 saeb_sme_2019_resumo %>% 
   mutate(PROP_SEC_INICIO=SEC_INICIOU_GESTAO) %>% 
   mutate(PROP_SEC_INICIO=case_when(PROP_SEC_INICIO=="Sim"~"1", PROP_SEC_INICIO=="Não"~"0")) %>%
@@ -171,10 +199,10 @@ saeb_sme_2019_resumo %>%
   theme_classic()
 ```
 
-* Observa-se uma grande assimetria à esquerda em relação à porporção de secretários que estão desde o início do governo em cada estado.
+* Por fim, criu-se um gráfico de densidade a partir dos mesmos dados do item anterior, sobre Secretários que estão no cargo desde que se iniciou o ciclo de governo.
 
 ```{r}
-# 
+# grafico de densidade da proporção de Secretários que iniciaram a gestão por Estado
 saeb_sme_2019_resumo %>% 
   mutate(PROP_SEC_INICIO=SEC_INICIOU_GESTAO) %>% 
   mutate(PROP_SEC_INICIO=case_when(PROP_SEC_INICIO=="Sim"~"1", PROP_SEC_INICIO=="Não"~"0")) %>%
@@ -182,29 +210,25 @@ saeb_sme_2019_resumo %>%
   group_by(ID_UF) %>%
   summarise(PROP_SEC_INICIO=mean(PROP_SEC_INICIO, na.rm=TRUE)) %>%
   ggplot() +
-  geom_density(aes(x=PROP_SEC_INICIO), colour="blue", fill="blue", alpha=0.2)
+  geom_density(aes(x=PROP_SEC_INICIO), colour="blue", fill="blue", alpha=0.2) +
+  ggtitle("Proporção de Secretários que iniciaram a gestão por Estado") + 
+  xlab("Proporção de Secretários") + 
+  ylab("Estados") + 
+  theme_classic()
 ```
 
+### Parte 2 - Análise do Banco de Dados do TSE/CEPESP sobre eleições municipais para prefeito em 2012 e 2016.
 
-
-# Abrindo banco de dados de eleições municipais em 2016
+* Inicialmente, foi aberto o banco de dados do TSE. Porém, como o identificador comum utilizado não é o mesmo do IBGE, optou-se por usar o banco já formatado do CepespData, que já contém o código correto e permite o cruzamento com, por exemplo, os dados dos questionários educacionais do SAEB.
 
 ```{r}
-# abrindo banco e definindo o encoding correto
+# abrindo banco do TSE e definindo o encoding correto
 vot_cand_mun_2016_br <- read_delim("votacao_candidato_munzona_2016_BRASIL.csv", delim=";", locale = locale(encoding='latin1'))
 ```
 
-
- em http://cepesp.io
-
-
-# Trabalhando com o banco de dados da eleição municipal de 2016
-
-* Inicialmente, foi baixado o banco de dados de resultados eleitorais para o cargo de Prefeito, agregado por município e candidato, para os anos de 2012 e 2016.
+* Desse modo, analisou-se o banco de dados de resultados eleitorais para o cargo de Prefeito, agregado por município e candidato, para os anos de 2012 e 2016.
 
     * O banco foi baixado on site da FGV CEPESP (2021). CepespData - Banco de Dados Políticos. Visitado em 20/7/2021. Disponível no [link](https://cepespdata.io/consulta/tse).
-    
-    * Optou-se pelo CepespData e não pelo banco de dados do TRE, pois este não contém identificadores do IBGE para os municípios, impossibilitando o cruzamento com, por exemplo, os dados dos questionários educacionais do SAEB.
 
     * Analisando o dicionário do banco, identificou-se que os dados estão no formato .csv, separados por ';'. Desse modo, procedeu-se a abertura deste banco.
 
@@ -212,7 +236,7 @@ vot_cand_mun_2016_br <- read_delim("votacao_candidato_munzona_2016_BRASIL.csv", 
 #abrindo  o banco de dados de resultados eleitorais por município em 2012 e 2016
 tse_pref_mun_cand_2016_2012 <- read_csv("TSE_PREFEITO_MUNICIPIO_CANDIDATO_2016_2012.csv")
 ```
-* Selecionando as variáveis de interesse e colapsando as demais com a função 'nest'.
+* Em seguida, foram selecionadas as variáveis de interesse, enquanto as demais variáveis foram 'colapsadas' em um tibble, com a função 'nest', para eventual uso futuro.
 
 ```{r}
 #Selecionando as variáveis de interesse e colapsando as demais com a função 'nest'.
@@ -225,10 +249,10 @@ tse_pref_mun_cand_2016_2012_res <- tse_pref_mun_cand_2016_2012 %>%
 tse_pref_mun_cand_2016_2012_res
 ```
 
-* Analisando as categorias das variáveis de interesse, identificou-se que existem alguns valores NA para situação total do 1º turno em 2012 e 2016. 
+* Analisando as categorias das variáveis de interesse, identificou-se que existem alguns valores ausentes (NA e #NULO#) para situação total do 1º turno em 2012 e 2016. 
 
 ```{r}
-# Analisando as categorias das variáveis de interesse para posterior filtragem.
+# Identificando as categorias das variáveis de interesse para posterior filtragem.
 library("knitr")
 tse_pref_mun_cand_2016_2012_res %>% group_by(ANO_ELEICAO, NUM_TURNO, DESC_SIT_TOT_TURNO) %>%
   tally() %>%
@@ -249,6 +273,8 @@ total_candidatos_2012_2016 <- tse_pref_mun_cand_2016_2012_res %>%
 
     * Como foi incluída a função 'distinct' para identificar candidatos únicos, conclui-se que não há candidatos duplicados no banco.
     
+    * ***Obs.*** Não consegui manter apenas os anos de 2012 e 2016 na legenda do gráfico abaixo, foi preenchido automaticamente os demais anos de forma equivocada.
+    
 ```{r}
 # Total de Candidatos a prefeito no 1º por ano e UF
 tse_pref_mun_cand_2016_2012_res %>% 
@@ -259,9 +285,19 @@ tse_pref_mun_cand_2016_2012_res %>%
   rename(TOT_CAND_ANO=n) %>%
    ggplot() + 
   geom_tile(aes(x = ANO_ELEICAO, y = UF, fill=TOT_CAND_ANO)) +
-  scale_fill_gradient(low="#f7fcfd", high="#238b45")
+  scale_fill_gradient(low="#f7fcfd", high="#238b45") +
+  ggtitle("Total de Candidatos a prefeito no 1º por ano e UF") + 
+  xlab("Ano") + 
+  ylab("Estado") + 
+  theme_classic() +
+  theme(axis.text.x = element_text(size=8),
+          axis.text.y = element_text(size=8),
+          axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12))
 ```
-* Observa-se que os estados de São Paulo, Minas Gerais, Rio Grande do Sul e Bahia tiveram a maior quantidade de candidatos em todo o estado.
+        * Observa-se que os estados de São Paulo, Minas Gerais, Rio Grande do Sul e Bahia tiveram a maior quantidade de candidatos a prefeito, comparado aos demais estados.
+    
+* Posteriormente, analisou-se a proporção de candidados a prefeito por ano nas eleições de 2012 e 2016.
     
 ```{r}
 #proporção de candidatos a prefeito por ano em cada UF
@@ -272,20 +308,26 @@ tse_pref_mun_cand_2016_2012_res %>%
   tally() %>%
   rename(TOT_CAND_ANO=n) %>%
   ggplot() +
-  geom_col(aes(x=UF, y=TOT_CAND_ANO, fill=ANO_ELEICAO), position = "fill")
+  geom_col(aes(x=UF, y=TOT_CAND_ANO, fill=ANO_ELEICAO), position = "fill") +
+  ggtitle("Proporção de candidatos a prefeito por ano em cada estado") + 
+  xlab("Estado") + 
+  ylab("Total de Candidatos") + 
+  theme_classic()
 ```
-* Observa-se houve relativa estabilidade na proporção de candidatos a prefeito entre os estados em 2012 e 2016, exceto por Roraima onde a concorrência se acentuou.
+    * Observa-se que houve relativa estabilidade na proporção de candidatos a prefeito por ano, exceto por Roraima onde a concorrência se acentuou em 2016.
 
-* Vamos analisar agora somente os candidatos eleitos em seus respectivos municipios em 2012 e 2016.
+* Na sequência, filtrou-se somente os candidatos eleitos em seus respectivos municipios em 2012 e 2016.
 
 ```{r}
 #selecionando somente os candidatos eleitos
 tse_pref_mun_cand_2016_2012_res_eleito <- tse_pref_mun_cand_2016_2012_res %>%
   filter(DESC_SIT_TOT_TURNO=="ELEITO") %>%
-  arrange(ANO_ELEICAO, UF, NOME_MUNICIPIO, SIGLA_PARTIDO)
+  arrange(UF, NOME_MUNICIPIO, SIGLA_PARTIDO) %>%
+  rename(ID_MUNICIPIO=COD_MUN_IBGE)
 ```
+    * Observa-se que, assim, o banco de dados foi reduzido de 31.468 para apenas 20.385 observações de candidatos a prefeito, uma média aproximada de 4 por município.
 
-* Calculando o total de prefeitos por ano e partido
+* Assim, foi calculado o total de prefeitos por ano e partido.
 
 ```{r}
 # Calculando o total de prefeitos eleitos por ano e partido
@@ -297,35 +339,82 @@ tse_pref_mun_cand_2016_2012_res_eleito %>%
   geom_col(aes(x=SIGLA_PARTIDO, y=TOTAL_PREFEITOS, fill=ANO_ELEICAO)) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 90)) +
-  facet_grid(rows=vars(ANO_ELEICAO))
+  facet_grid(rows=vars(ANO_ELEICAO)) +
+  ggtitle("Total de prefeitos eleitos por ano e partido") + 
+  xlab("Partido") + 
+  ylab("Total de Prefeitos")
 ```
+    * Percebe-se também uma certa estabilidade entre a quantidade total de prefeitos eleitos por partido em 2012 e 2016, com o PMDB e o PSDB se destacando em relação aos demais. Porém, nota-se uma grande redução sofrida pelo PT na última eleição em decorrência do processo de impeachment.
 
-* Observa-se também uma certa estabilidade entre a quantidade total de prefeitos eleitos por partido em 2012 e 2016, com o PMDB e o PSDB se destacando em relação aos demais. Porém, nota-se uma grande redução sofrida pelo PT na última eleição em decorrência do processo de impeachment.
-
-
-
+* Em sequida, foi aplicada a função 'pivot_wider' para virar os dados de 2012 e 2016 do longo para o largo, o que fez o banco de dados ser reduzido de 11.083 para 5.569 observações, pois não há eleições ou resultados para ambos os anos.
 
 ```{r}
-tse_pref_mun_cand_2016_2012_res_eleito
+# pivot_wider para virar 2012 e 2016
+tse_pref_mun_cand_2016_2012_res_eleito_data <- tse_pref_mun_cand_2016_2012_res_eleito %>%
+  select(ANO_ELEICAO, ID_MUNICIPIO,NOME_MUNICIPIO, UF, SIGLA_PARTIDO) %>%
+  pivot_wider(names_from = ANO_ELEICAO, values_from = SIGLA_PARTIDO) %>%
+  unnest() %>%
+  rename(Ano_2012="2012", Ano_2016="2016")
+tse_pref_mun_cand_2016_2012_res_eleito_data
 ```
 
-* O banco 
+* Logo, foi criada a variável de rotatividade dos partidos para àqueles que tiveram novos partidos eleitos em 2016 em relação a 2012.
 
 ```{r}
-#abrindo  o banco de dados dos SME
+#criando variável de rotatividade dos partidos
+tse_pref_mun_cand_2016_2012_res_eleito_data <- tse_pref_mun_cand_2016_2012_res_eleito_data %>%
+  mutate(ROTATIVIDADE_PART=case_when(Ano_2012==Ano_2016~"0", Ano_2012!=Ano_2016~"1"))
+```
+
+* Depois procedeu-se algumas estatísticas descritivas, a começar pelo percentual de partidos municipais que tiveram rotatividade entre 2012 e 2016
+
+    * ***Obs.*** Não consegui aqui reduzir o número de dígitos por coluna
+
+```{r}
+# calculando o percentual de partidos municipais que tiveram rotatividade entre 2012 e 2016
+tse_pref_mun_cand_2016_2012_res_eleito_data %>%
+  group_by(ROTATIVIDADE_PART) %>%
+  tally() %>%
+  rename(TOT_PARTIDOS="n") %>%
+  mutate(PCT_PARTIDOS=TOT_PARTIDOS/sum(TOT_PARTIDOS),
+         ROTATIVIDADE_PART=case_when(ROTATIVIDADE_PART=="0"~"Não", ROTATIVIDADE_PART=="1"~"Sim"),
+         ROTATIVIDADE_PART=replace_na(ROTATIVIDADE_PART, "Desconhecido")) %>%
+  ggplot() +
+  geom_col(aes(x=ROTATIVIDADE_PART, y=PCT_PARTIDOS, fill=ROTATIVIDADE_PART)) +
+  geom_text(aes(x=ROTATIVIDADE_PART, y=PCT_PARTIDOS, label=PCT_PARTIDOS), vjust = -1, size=3) +
+  theme_classic() +
+  ggtitle("Rotatividade partidária nas eleições de 2012 e 2016") + 
+  xlab("Rotatividade") + 
+  ylab("Percentual de partidos") + 
+  theme(axis.text.x = element_blank(),
+          axis.text.y = element_text(size=10),
+          axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12))
+```
+  
+### Parte 3 - Análise do banco de dados do SAEB sobre Diretores(as) Escolares
+
+* Inicialmente, foi realizada a abertura do banco de dados.
+
+```{r}
+# abrindo o banco de dados dos SME
 diretores_saeb_2019 <- read_csv("TS_DIRETOR_SAEB_2019.csv")
 diretores_saeb_2019 %>% nrow()
 ```
 
+* Na sequência, foram selecionadas as principais variáveis de interesse, totalizando um banco com apenas 14 variáveis e 74.176 obsservações.
+
 ```{r}
+# selecionando variáves de interesse
 diretores_saeb_2019_res <- diretores_saeb_2019 %>%
   select(ID_REGIAO, ID_UF, ID_MUNICIPIO, ID_AREA, ID_ESCOLA, ID_DEPENDENCIA_ADM, ID_LOCALIZACAO, IN_PREENCHIMENTO_QUESTIONARIO, TX_RESP_Q001, TX_RESP_Q004, TX_RESP_Q005, TX_RESP_Q006, TX_RESP_Q007, TX_RESP_Q022)
 diretores_saeb_2019_res
 ```
 
-* Para evitar repetir todos os códigos na drescição da região, foi utilizada a função map
+* Em seguida, foram recodificadas as variáveis e observações com base nos valores disponíveis no dicionário do SAEB 2019.
 
 ```{r}
+# alterando as observações com base nos valores do dicionário
 diretores_saeb_2019_res <- diretores_saeb_2019_res %>%
   mutate(ID_REGIAO=case_when(ID_REGIAO=="1"~"Norte", ID_REGIAO=="2"~"Nordeste", ID_REGIAO=="3"~"Sudeste", ID_REGIAO=="4"~"Sul", ID_REGIAO=="5"~"Centro-Oeste"), ID_UF=case_when(ID_UF=="11"~"RO", ID_UF=="12"~"AC", ID_UF=="13"~"AM", ID_UF=="14"~"RR", ID_UF=="15"~"PA", ID_UF=="16"~"AP", ID_UF=="17"~"TO", ID_UF=="21"~"MA", ID_UF=="22"~"PI", ID_UF=="23"~"CE", ID_UF=="24"~"RN",ID_UF=="25"~"PB", ID_UF=="26"~"PE", ID_UF=="27"~"AL", ID_UF=="28"~"SE", ID_UF=="29"~"BA", ID_UF=="31"~"MG", ID_UF=="32"~"ES", ID_UF=="33"~"RJ", ID_UF=="35"~"SP", ID_UF=="41"~"PR", ID_UF=="42"~"SC", ID_UF=="43"~"RS", ID_UF=="50"~"MS", ID_UF=="51"~"MT", ID_UF=="52"~"GO", ID_UF=="53"~"DF"))
 
@@ -336,36 +425,47 @@ diretores_saeb_2019_res <- diretores_saeb_2019_res %>%
   rename(RACA=TX_RESP_Q001, DIR_ESC_ANO=TX_RESP_Q004, DIR_ESC_MES=TX_RESP_Q005, DIR_MESMA_ESC_ANO=TX_RESP_Q006, DIR_MESMA_ESC_MES=TX_RESP_Q007, LIDER_EQUIPE_ESC=TX_RESP_Q022)
 ```
 
- * Criando nova variável ordinal para liderança
+ * Posteriormente, foi criada uma nova variável para liderança do diretor, com base em valores ordinais e não caracteres.
 
 ```{r}
+# Criando nova variável ordinal para liderança
 diretores_saeb_2019_res_lider <- diretores_saeb_2019_res %>%
   mutate(LIDER_EQUIPE_ESC_IND=case_when(LIDER_EQUIPE_ESC=="Nada Preparado"~"0", LIDER_EQUIPE_ESC=="Pouco Preparado"~"1", LIDER_EQUIPE_ESC=="Preparado"~"2", LIDER_EQUIPE_ESC=="Muito Preparado"~"3"))
 ```
 
-diretores_saeb_2019_res_fct_lider_ano <- 
+* Da mesma forma, foram criadas duas variáveis de experiência do diretor por faixa de anos, a partir de categorias encontradas na literatura especializada.
 
 ```{r}
+#criando novas variáveis de experiência do diretor por faixa de anos
 diretores_saeb_2019_res_lider_rec <- diretores_saeb_2019_res_lider %>%
-  mutate(DIR_ESC_ANO = case_when(DIR_ESC_ANO<=2~"De 0 a 2 Anos", DIR_ESC_ANO>2 & DIR_ESC_ANO <=5~"De 3 a 5 Anos", DIR_ESC_ANO>5 & DIR_ESC_ANO <=10~"De 6 a 10 Anos", DIR_ESC_ANO>10 & DIR_ESC_ANO <=15~"De 11 a 15 Anos", DIR_ESC_ANO>15~"Acima de 15 anos"), DIR_MESMA_ESC_ANO = case_when(DIR_MESMA_ESC_ANO<=2~"De 0 a 2 Anos", DIR_MESMA_ESC_ANO>2 & DIR_MESMA_ESC_ANO <=5~"De 3 a 5 Anos", DIR_MESMA_ESC_ANO>5 & DIR_MESMA_ESC_ANO <=10~"De 6 a 10 Anos", DIR_MESMA_ESC_ANO>10 & DIR_MESMA_ESC_ANO <=15~"De 11 a 15 Anos", DIR_MESMA_ESC_ANO>15~"Acima de 15 anos"))
+  mutate(DIR_ESC_ANO_FX = case_when(DIR_ESC_ANO<=2~"De 0 a 2 Anos", DIR_ESC_ANO>2 & DIR_ESC_ANO <=5~"De 3 a 5 Anos", DIR_ESC_ANO>5 & DIR_ESC_ANO <=10~"De 6 a 10 Anos", DIR_ESC_ANO>10 & DIR_ESC_ANO <=15~"De 11 a 15 Anos", DIR_ESC_ANO>15~"Acima de 15 anos"), DIR_MESMA_ESC_ANO_FX = case_when(DIR_MESMA_ESC_ANO<=2~"De 0 a 2 Anos", DIR_MESMA_ESC_ANO>2 & DIR_MESMA_ESC_ANO <=5~"De 3 a 5 Anos", DIR_MESMA_ESC_ANO>5 & DIR_MESMA_ESC_ANO <=10~"De 6 a 10 Anos", DIR_MESMA_ESC_ANO>10 & DIR_MESMA_ESC_ANO <=15~"De 11 a 15 Anos", DIR_MESMA_ESC_ANO>15~"Acima de 15 anos"), DIR_ESC_ATE_7_ANOS = case_when(DIR_ESC_ANO<=7~1, DIR_ESC_ANO>7~0), DIR_MESMA_ESC_ATE_7_ANOS = case_when(DIR_MESMA_ESC_ANO<=7~1, DIR_MESMA_ESC_ANO>7~0), DIR_MESMA_ESC_ATE_3_ANOS = case_when(DIR_MESMA_ESC_ANO<=3~1, DIR_MESMA_ESC_ANO>3~0), DIR_ESC_ATE_3_ANOS = case_when(DIR_ESC_ANO<=3~1, DIR_ESC_ANO>3~0))
 ```
 
-* transformando variáves em factor
+* Foi necessário transformar algumas variáveis em factor para eventual uso nas tabelas finais de regressão ou mesmo estatísticas descritivas.
 
 ```{r}
-diretores_saeb_2019_res_lider_rec_fact <- diretores_saeb_2019_res_lider_rec %>% mutate(ID_REGIAO=as.factor(ID_REGIAO), ID_UF=as.factor(ID_UF), ID_AREA=as.factor(ID_AREA), ID_DEPENDENCIA_ADM=as.factor(ID_DEPENDENCIA_ADM), ID_LOCALIZACAO=as.factor(ID_LOCALIZACAO), RACA=as.factor(RACA), LIDER_EQUIPE_ESC=as.factor(LIDER_EQUIPE_ESC), LIDER_EQUIPE_ESC_IND=as.integer(LIDER_EQUIPE_ESC_IND), DIR_ESC_ANO=as.factor(DIR_ESC_ANO), DIR_MESMA_ESC_ANO=as.factor(DIR_MESMA_ESC_ANO))
-```
-
-```{r}
+# transformando variáves em factor para agrupamento
+diretores_saeb_2019_res_lider_rec_fact <- diretores_saeb_2019_res_lider_rec %>% mutate(ID_REGIAO=as.factor(ID_REGIAO), ID_UF=as.factor(ID_UF), ID_AREA=as.factor(ID_AREA), ID_DEPENDENCIA_ADM=as.factor(ID_DEPENDENCIA_ADM), ID_LOCALIZACAO=as.factor(ID_LOCALIZACAO), RACA=as.factor(RACA), LIDER_EQUIPE_ESC=as.factor(LIDER_EQUIPE_ESC), LIDER_EQUIPE_ESC_IND=as.integer(LIDER_EQUIPE_ESC_IND), DIR_ESC_ANO_FX=as.factor(DIR_ESC_ANO_FX), DIR_MESMA_ESC_ANO_FX=as.factor(DIR_MESMA_ESC_ANO_FX))
 diretores_saeb_2019_res_lider_rec_fact
 ```
 
-### Conhecendo a distribuição das variáveis de interesse 
-
-* Replace NA.
+* Filtrando somente escolas municipais, temos um total de 44.175 escolas, de um total de 74.176 incluindo as outras dependências adminstrativas.
 
 ```{r}
-diretores_saeb_2019_res_lider_rec_fact %>%
+# filtrando somente as escolas municipais antes do join de eleição municipal
+diretores_saeb_2019_res_lider_rec_fact_mun <- diretores_saeb_2019_res_lider_rec_fact %>%
+  filter(ID_DEPENDENCIA_ADM=="Municipal")
+diretores_saeb_2019_res_lider_rec_fact_mun %>%
+  nrow
+```
+
+* Para conhecer a distribuição das variáveis de interesse, foram criadas tabelas com estatísticas descritivas básicas e a substituição de dados ausentes pela categoria "Não Declarado".
+
+    * O maior percentual de diretores (67,7%) sente-se preparado para o exercício do cargo, o que representa o terceiro nível de um total de quatro categorias.
+
+```{r}
+# calculando o percentual de diretores por nível de prepararação para liderança
+diretores_saeb_2019_res_lider_rec_fact_mun %>%
   group_by(LIDER_EQUIPE_ESC) %>%
   tally() %>%
   rename(TOT_DIRETORES = n) %>%
@@ -374,23 +474,288 @@ diretores_saeb_2019_res_lider_rec_fact %>%
   mutate(LIDER_EQUIPE_ESC=replace_na(LIDER_EQUIPE_ESC, "Não Declarado"))
 ```
 
+* Utilizando-se a mesma lógica anterior, foi calculado o percentual de diretores com experiência nesta função por faixa de anos.
+
+    * O maior percentual de diretores (25,7%) possui experiência na faixa de 0 a 2 anos na função de diretor, ou seja, assumiram a escola neste último mandato de 2016, sendo que por volta de 70% tem no máximo 10 anos nesta função (não estão considerados aqueles que não declararam).
+
 ```{r}
-diretores_saeb_2019_res_lider_rec_fact %>%
-  group_by(DIR_ESC_ANO) %>%
+# calculando % de diretores por faixa de idade para experiência na função
+diretores_saeb_2019_res_lider_rec_fact_mun %>%
+  group_by(DIR_ESC_ANO_FX) %>%
   tally() %>%
   rename(TOT_DIRETORES = n) %>%
   mutate(PERC_DIRETORES=TOT_DIRETORES/(sum(TOT_DIRETORES, na.rm = TRUE))) %>%
-  add_row(DIR_ESC_ANO="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
-  mutate(DIR_ESC_ANO=replace_na(DIR_ESC_ANO, "Não Declarado"))
+  add_row(DIR_ESC_ANO_FX="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
+  mutate(DIR_ESC_ANO_FX=replace_na(DIR_ESC_ANO_FX, "Não Declarado"))
 ```
 
+* foi calculado ainda o percentual de diretores com experiência no cargo de diretor na MESMA escola, por faixa de anos.
+
+    * O maior percentual de diretores (36,6%) possui experiência na faixa de 0 a 2 anos no cargo de diretor na MESMA escola, ou seja, assumiram a escola neste último mandato de 2016, sendo que por volta de 73% tem no máximo 10 anos nesta função (não estão considerados aqueles que não declararam)..
+
 ```{r}
-diretores_saeb_2019_res_lider_rec_fact %>%
-  group_by(DIR_MESMA_ESC_ANO) %>%
+# calculando o percentual de diretores por faixa de idade para experiência no cargo na mesma escola
+diretores_saeb_2019_res_lider_rec_fact_mun %>%
+  group_by(DIR_MESMA_ESC_ANO_FX) %>%
   tally() %>%
   rename(TOT_DIRETORES = n) %>%
   mutate(PERC_DIRETORES=TOT_DIRETORES/(sum(TOT_DIRETORES, na.rm = TRUE))) %>%
-  add_row(DIR_MESMA_ESC_ANO="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
-  mutate(DIR_MESMA_ESC_ANO=replace_na(DIR_MESMA_ESC_ANO, "Não Declarado"))
+  add_row(DIR_MESMA_ESC_ANO_FX="Total", TOT_DIRETORES=sum(.$TOT_DIRETORES), PERC_DIRETORES=sum(.$PERC_DIRETORES)) %>%
+  mutate(DIR_MESMA_ESC_ANO_FX=replace_na(DIR_MESMA_ESC_ANO_FX, "Não Declarado"))
 ```
 
+* Em seguida, foram criadas três variáveis de urbanização, capital e raça para utilizaçao como variáveis de controle.
+
+```{r}
+# criando variável de urbanização, capital e raça e transformando em variável ordinal.
+diretores_saeb_2019_res_lider_rec_fact_mun_urb <- diretores_saeb_2019_res_lider_rec_fact_mun %>%
+  mutate(CAPITAL=case_when(ID_AREA=="Interior"~"0", ID_AREA=="Capital"~"1"), 
+         URBANA=case_when(ID_LOCALIZACAO=="Rural"~"0", ID_LOCALIZACAO=="Urbana"~"1"), 
+         BRANCA=case_when(RACA=="Branca"~"1", RACA!="Branca"~"0"),
+         CAPITAL=as.integer(CAPITAL), URBANA=as.integer(URBANA), BRANCA=as.integer(BRANCA))
+```
+
+* Posteriormente, foram calculadas as médias por município para diversas variáveis com 'across', considerando que a unidade de análise deste banco são escolas e não municípios.
+
+```{r}
+#calculando as médias por município para diversas variáveis com 'across'
+diretores_saeb_2019_res_lider_rec_fact_mun_urb_ind <- diretores_saeb_2019_res_lider_rec_fact_mun_urb %>%
+  group_by(ID_MUNICIPIO) %>%
+  mutate(across(c(DIR_ESC_ANO, DIR_MESMA_ESC_ANO, LIDER_EQUIPE_ESC_IND, URBANA, BRANCA, CAPITAL, DIR_ESC_ATE_7_ANOS, DIR_MESMA_ESC_ATE_7_ANOS, DIR_MESMA_ESC_ATE_3_ANOS, DIR_ESC_ATE_3_ANOS), 
+                             list(media=mean), 
+                             na.rm=TRUE))
+```
+
+* Por fim,  banco de dados foi preparado para a junção com os demais bancos por meio das funções 'select' e 'distinct', mantendo agora somente uma observação por município. 
+
+```{r}
+#selecionando as variáveis categóricas e quantitativas para o join com 'select' e 'distinct'
+diretores_saeb_2019_resum_munic_join <- diretores_saeb_2019_res_lider_rec_fact_mun_urb_ind %>%
+  select(ID_UF, ID_MUNICIPIO, LIDER_EQUIPE_ESC_IND_media, CAPITAL_media, URBANA_media, BRANCA_media, DIR_ESC_ANO_media, DIR_MESMA_ESC_ANO_media, DIR_ESC_ATE_7_ANOS_media, DIR_MESMA_ESC_ATE_7_ANOS_media, DIR_ESC_ATE_3_ANOS_media, DIR_MESMA_ESC_ATE_3_ANOS_media) %>%
+  distinct(ID_UF, ID_MUNICIPIO, LIDER_EQUIPE_ESC_IND_media, CAPITAL_media, URBANA_media, BRANCA_media, DIR_ESC_ANO_media, DIR_MESMA_ESC_ANO_media, DIR_ESC_ATE_7_ANOS_media, DIR_MESMA_ESC_ATE_7_ANOS_media, DIR_ESC_ATE_3_ANOS_media, DIR_MESMA_ESC_ATE_3_ANOS_media) %>%
+  ungroup()
+```
+
+### Parte 4 - Fazendo na junção dos dois bancos do TSE-CEPESP/Prefeito_Eleito e SAEB/Diretor_Escolar
+
+* Inicialmente, foi realizado um teste de junção com anti_join. Há 187 municípios sem diretores municipais relacionados, enquanto há 1.683 dados de diretores municipais sem municípios relacionados no banco do Cepesp. 
+
+    * Como o banco de diretores não contém o nome dos municípios, não é possível verificar porque há mais de 5.570 municípios (total do Brasil), mas cujos códigos não batem com o do IBGE no banco do Cepesp.
+
+```{r}
+# teste de junção de dados com anti_join e datatable para análise das observações
+library(DT)
+diretores_saeb_2019_tse_pref_eleito_12_16_anti <- tse_pref_mun_cand_2016_2012_res_eleito_data %>%
+  anti_join(diretores_saeb_2019_resum_munic_join, by="ID_MUNICIPIO") %>%
+  datatable()
+diretores_saeb_2019_tse_pref_eleito_12_16_anti
+```
+
+* Em seguida, procedeu-se a junção dos bancos com 'left_join', totalizando 5.569 municípios no banco.
+
+```{r}
+# juntando os dois bancos com left_join
+diretores_saeb_2019_tse_pref_eleito_12_16_join <- tse_pref_mun_cand_2016_2012_res_eleito_data %>%
+  left_join(diretores_saeb_2019_resum_munic_join, by="ID_MUNICIPIO")
+```
+
+* Em seguida, foi aberto um quarto banco de dados do INEP/SAEB, somente com o Nível Socio Economico por município, que totalizou 69.906 observações.
+
+```{r}
+#abrindo banco e padronizando variáveis com vírgulas
+nse_saeb_2019 <- read_delim("INSE_2019_MUNICIPIOS_RESUMO_PT.csv", delim=";") %>%
+  rename(ID_MUNICIPIO="CO_MUNICIPIO",MEDIA_NSE_EXT_MUN="MEDIA_INSE-EXT_MUN")
+```
+
+* Após calcular a média do nível socioconômico dos alunos por município, o banco ficou com 5.568 observações, apenas uma a menos que o banco anterior.
+
+```{r}
+#calculando a média do NSE por município a partir dos estratos do município calculado do INEP
+nse_saeb_2019_res <- nse_saeb_2019 %>%
+  group_by(ID_MUNICIPIO) %>%
+  summarise(MED_NSE=mean(MEDIA_NSE_EXT_MUN, na.rm = TRUE))
+nse_saeb_2019_res
+```
+
+* Aqui também foi aplicado um 'anti_join" onde verificou que existem apenas 2 municípios para os quais não há valores de NSE, ndo um deles possivelmente devido à diferença de código.
+
+```{r}
+# teste de junção de dados com anti_join para análise das observações
+diretores_saeb_2019_tse_pref_eleito_12_16_anti_nse <- diretores_saeb_2019_tse_pref_eleito_12_16_join %>%
+  anti_join(nse_saeb_2019_res, by="ID_MUNICIPIO")
+diretores_saeb_2019_tse_pref_eleito_12_16_anti_nse
+```
+
+* Assim, este quarto banco de nivel socioeconômico foi juntado ao anterior, totalizando 5.569 observações de municípios e 18 variáveis.
+
+```{r}
+#juntando o banco de NSE ao banco do TSE e SAEB 2019
+diretores_saeb_2019_tse_pref_eleito_12_16_join_nse <- diretores_saeb_2019_tse_pref_eleito_12_16_join %>%
+  left_join(nse_saeb_2019_res, by="ID_MUNICIPIO")
+diretores_saeb_2019_tse_pref_eleito_12_16_join_nse
+```
+
+* Antes do cálculo das estatísticas, foi aplicado um filtro para verificação de dados ausentes (NA | NaN) para a variável dependente de liderança do diretor.
+
+```{r}
+#vericando a existência de dados ausentes no banco e excluindo variável duplicada de UF
+diretores_saeb_2019_tse_pref_eleito_12_16_join_nse_NA <- diretores_saeb_2019_tse_pref_eleito_12_16_join_nse %>% select(-ID_UF) %>%
+  filter(is.na(LIDER_EQUIPE_ESC_IND_media)) %>% 
+  nrow()
+```
+    * Verificou que existem `r diretores_saeb_2019_tse_pref_eleito_12_16_join_nse_NA` municípios sem dados completos para a liderança do diretor.
+
+* Logo, foram selecionadas somente variáveis não ausentes para liderança do diretor e transformadas as outras variáveis em factor ou integer, eliminando ainda a dupla variável para UF.
+
+```{r}
+# selecionando somente variáveis não ausentes para liderança do diretor e transformando outras variáveis em factor ou integer, eliminando ainda a dupla variável para UF
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 <- diretores_saeb_2019_tse_pref_eleito_12_16_join_nse %>% select(-ID_UF) %>%
+  filter(LIDER_EQUIPE_ESC_IND_media != "NaN") %>%
+  mutate(ROTATIVIDADE_PART = as.integer(ROTATIVIDADE_PART), NOME_MUNICIPIO = as.factor(NOME_MUNICIPIO), UF = as.factor(UF), Ano_2012 = as.factor(Ano_2012), Ano_2016 = as.factor(Ano_2016))
+
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 
+```
+    * Logo, o banco de dados final para análise estatística ficou com 5.236 observações e 17 variáveis.
+
+### Parte 5 - Estatística Inferecial
+
+
+* Inicialmente, foi aplicado um teste de normalidade para a variável dependente ***liderança do diretor***.
+
+```{r}
+# aplicando um teste de normalidade para a variável dependente liderança do diretor
+library(broom)
+teste_normalidade <- diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
+  sample_n(5000) %>%
+  pull(LIDER_EQUIPE_ESC_IND_media) %>% 
+  shapiro.test() %>%
+  tidy()
+```
+
+* O resultado do teste de normalidade é de `r teste_normalidade %>% pull(p.value) %>% round(3)`
+
+    * Abaixo foi verificada a classe do objeto criado.
+
+```{r}
+# Verificando a classe do objeto criado pela shapiro.test
+class(teste_normalidade)
+```
+    * Também foi criado um gráfico para o teste de normalidade, onde verificou-se uma alta concentração na faixa 2 (preparado), conforme observado anteriormente.
+
+```{r}
+#criando um gráfico para o teste de normalidade
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>% 
+  ggplot() +
+  geom_density(aes(x=LIDER_EQUIPE_ESC_IND_media)) +
+  xlim(0,3) +
+  theme_classic() +
+  ggtitle("Teste de normalidade para a variável dependente Liderança do Diretor") + 
+  xlab("Liderança") + 
+  ylab("Total de Diretores")
+```
+
+* Na sequência, foi realizado um Teste de Médias para verificar se São paulo, que é mais desenvolvido, possui uma média estatisticamente superior à média geral de liderança.
+
+    * Concluiu-se que esta hipótese é verdadeira, ou seja, as médias são diferentes de forma significativa
+
+```{r}
+# calculando a média de liderança do diretor para realizar teste de médias em comparação à São Paulo
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
+  summarise(mean(LIDER_EQUIPE_ESC_IND_media))
+
+teste_media <- diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>% 
+  filter(UF=="SP") %>%
+  pull(LIDER_EQUIPE_ESC_IND_media) %>%
+  t.test(mu=2.144406) %>% 
+  tidy
+
+teste_media
+```
+    *Logo, foi criado um gráfico para demonstrar o intervalo de confiança em relação à média de liderança do diretor para São Paulo.
+
+```{r}
+# calculando o intervalo da liderança média do diretor em São Paulo
+teste_media %>% mutate(Lideranca="LIDER_EQUIPE_ESC_IND_media") %>% 
+  ggplot() +
+  geom_point(aes(x=Lideranca, y=estimate)) +
+  geom_hline(yintercept=2.144406, lty=1, color="blue") +
+  geom_errorbar(aes(x=Lideranca, ymin=conf.low, ymax=conf.high), width=0.1) +
+  ggtitle("Intervalo para a variável dependente Liderança do Diretor em São Paulo")
+```
+
+* Foi realizado ainda um Teste de Correlação com as variáveis de 'rotatividade partidária' e 'tempo médio no cargo de diretor na mesma escola'.
+
+```{r}
+# verificando se existe correlação entre rotatividade e liderança média do diretor
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>% 
+  cor.test(~ ROTATIVIDADE_PART + DIR_MESMA_ESC_ANO_media, data=.) %>%
+  tidy()
+```
+    * Os resultados indicam um coeficiente de correlação de -0,15 e um valor ‘p’ de 1,16. Logo, há uma correlação negativa e estatisticamente significativa entre rotatividade partidária e anos no cargo de diretor na mesma escola.
+
+
+* Também foi criado um teste de correlação (Chi-squared) para as variáveis categóricas de 'rotatividade partidária' e a variável binária criada de 'até 7 anos no cargo de diretor na mesma escola'.
+
+```{r}
+#Testes de Correlação de Variáveis Categóricas (Chi-squared) rotatividade do diretor e até 7 anos no cargo de diretor na mesma escola
+teste_correlacao <- diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>% select(ROTATIVIDADE_PART, DIR_MESMA_ESC_ATE_7_ANOS_media) %>% 
+  table() %>% 
+  chisq.test() %>%
+  tidy()
+```
+    * O resultado do Chi-squared test de `r teste_correlacao %>% pull(p.value) %>% round(3)`
+
+* Por fim, foram testados 3 modelos de Regressão Linear Múltipla com base em diferentes formas de categorizar a experiência do diretor na função e o tempo no cargo de diretor na MESMA escola.
+
+* ***Os resultados do MODELO 1 estão dispostos a seguir***.
+
+```{r}
+# aplicando método de regressão no MODELO 1 para média de diretores
+library("dplyr")
+library("stats")
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
+  lm(LIDER_EQUIPE_ESC_IND_media ~ ROTATIVIDADE_PART + DIR_ESC_ANO_media + DIR_MESMA_ESC_ANO_media + CAPITAL_media + URBANA_media + BRANCA_media + MED_NSE, data = .) %>%
+  summary()
+```
+
+* ***Os resultados do MODELO 2 estão dispostos a seguir***.
+
+```{r}
+# aplicando método de regressão no MODELO 2 para média de diretores até 7 anos no cargo (1o e 2o mandato)
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
+  lm(LIDER_EQUIPE_ESC_IND_media ~ ROTATIVIDADE_PART + DIR_ESC_ATE_7_ANOS_media + DIR_MESMA_ESC_ATE_7_ANOS_media + CAPITAL_media + URBANA_media + BRANCA_media + MED_NSE, data = .) %>%
+  summary()
+```
+
+* ***Os resultados do MODELO 3 estão dispostos a seguir***.
+
+```{r}
+# aplicando método de regressão no MODELO 3 para média de diretores até 3 anos no cargo (2o mandato)
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
+  lm(LIDER_EQUIPE_ESC_IND_media ~ ROTATIVIDADE_PART + DIR_ESC_ATE_3_ANOS_media + DIR_MESMA_ESC_ATE_3_ANOS_media + CAPITAL_media + URBANA_media + BRANCA_media + MED_NSE, data = .) %>%
+  summary()
+```
+
+* Desse modo, optou-se por seguir adiante com o MODELO 1, analisando-se os seus resultados e construindo uma tabela melhor formatada para apresentação final.
+
+```{r, results="asis"}
+library("stargazer")
+diretores_saeb_2019_tse_pref_eleito_12_16_nse_2019 %>%
+  lm(LIDER_EQUIPE_ESC_IND_media ~ ROTATIVIDADE_PART + DIR_ESC_ANO_media + DIR_MESMA_ESC_ANO_media + CAPITAL_media + URBANA_media + BRANCA_media + MED_NSE, data = .) %>%
+  stargazer(type="html")
+```
+* Conclui-se, assim, que:
+
+1. O ***tempo de experiência na função de diretor***, independente de ser na mesma escola ou não, é o fator que mais afeta a variável dependente de liderança do diretor (significante a 99,9% de probabilidade), o que foi observado nos três modelos analisados; 
+
+2. Já a ***experiência no cargo de diretor na MESMA escola*** não possui relevância estatística, exceto no modelo 3 (efeito negativo), onde foi analizada esta faixa até 3 anos, ou seja, os diretores menos experientes de forma geral. 
+
+3. A variável independente de interesse primário ***rotatividade partidária*** também não possui relevância estatística com base nos resultados dos três modelos.
+
+4. Destaca-se ainda as variáveis de urbanização (maior proporção de escolas na área urbana) e maior nível socioeconômico médio dos alunos no município, que são signifcantes a 95% de probabilidade.
+
+5. O fato de ser uma escola localizada na capital (e não no interior) possui relevância somente a 90% de probabilidade, ou seja, possui um efeito baixo, enquanto  a diretora ser branca não possui qualquer relevância estatística.
+
+6. Por fim, considerando a hipótese inicial de que a rotatividade partidária afeta a liderança do diretor, conclui-se que devemos aceitar a hipótese nula de que não há efeito estatístico relevante que permita ter esta conclusão a partir dos resultados destes modelos.
+
+*FIM*
